@@ -1,8 +1,66 @@
+require("dotenv").config();
 const express = require("express");
 const db = require("./firebase");
+const axios = require("axios");
 
 const app = express();
 app.use(express.json());
+
+async function getSpotifyToken() {
+  const response = await axios.post(
+    "https://accounts.spotify.com/api/token",
+    "grant_type=client_credentials",
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization:
+          "Basic " +
+          Buffer.from(
+            process.env.SPOTIFY_CLIENT_ID +
+              ":" +
+              process.env.SPOTIFY_CLIENT_SECRET
+          ).toString("base64"),
+      },
+    }
+  );
+
+  return response.data.access_token;
+}
+
+app.get("/songs", async (req, res) => {
+  try {
+    const token = await getSpotifyToken();
+
+    const response = await axios.get(
+      "https://api.spotify.com/v1/search",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          q: "pop",
+          type: "track",
+          limit: 10,
+        },
+      }
+    );
+
+    const songs = response.data.tracks.items.map((track) => ({
+      spotifyId: track.id,
+      title: track.name,
+      artist: track.artists[0]?.name || "",
+      album: track.album?.name || "",
+      imageUrl: track.album?.images?.[0]?.url || "",
+      previewUrl: track.preview_url || "",
+    }));
+
+    res.json(songs);
+  } catch (error) {
+    console.error("Spotify error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch songs" });
+  }
+});
+
 
 app.get("/", (req, res) => {
   console.log("Root route hit");
