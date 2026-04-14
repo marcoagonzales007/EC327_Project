@@ -1,30 +1,87 @@
-import React, { useState, useCallback } from 'react';
-import { PLACEHOLDER_TRACKS } from './data/placeholderTracks';
-import Header    from './components/Header';
+import React, { useState, useCallback, useEffect } from 'react';
+import Header from './components/Header';
 import CardStack from './components/CardStack';
 
 const App = () => {
-  const [deck,        setDeck]        = useState(PLACEHOLDER_TRACKS);
-  const [likedCount,  setLikedCount]  = useState(0);
+  const [deck, setDeck] = useState([]);
+  const [likedCount, setLikedCount] = useState(0);
   const [passedCount, setPassedCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchSongs = useCallback(() => {
+    setIsLoading(true);
+
+    fetch('http://localhost:3000/songs?q=pop')
+      .then((res) => res.json())
+      .then((data) => {
+        const formatted = data.map((song) => ({
+          id: song.spotifyId,
+          name: song.title,
+          artists: [{ name: song.artist }],
+          album: {
+            name: song.album,
+            images: [{ url: song.imageUrl }],
+          },
+          preview_url: song.previewUrl,
+          popularity: 50,
+        }));
+
+        setDeck(formatted);
+      })
+      .catch((err) => {
+        console.error('Error fetching songs:', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetchSongs();
+  }, [fetchSongs]);
 
   const handleLike = useCallback((track) => {
-    setDeck(prev => prev.filter(t => t.id !== track.id));
-    setLikedCount(prev => prev + 1);
-    console.log('❤️  Liked:', track.name);
+    fetch('http://localhost:3000/like', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        uid: 'testUser123',
+        song: {
+          spotifyId: track.id,
+          title: track.name,
+          artist: track.artists[0]?.name || '',
+          album: track.album?.name || '',
+          imageUrl: track.album?.images?.[0]?.url || '',
+          previewUrl: track.preview_url || '',
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('Saved liked song:', data);
+      })
+      .catch((err) => {
+        console.error('Error saving liked song:', err);
+      });
+
+    setDeck((prev) => prev.filter((t) => t.id !== track.id));
+    setLikedCount((prev) => prev + 1);
+    console.log('❤️ Liked:', track.name);
   }, []);
 
   const handlePass = useCallback((track) => {
-    setDeck(prev => prev.filter(t => t.id !== track.id));
-    setPassedCount(prev => prev + 1);
-    console.log('✕  Passed:', track.name);
+    setDeck((prev) => prev.filter((t) => t.id !== track.id));
+    setPassedCount((prev) => prev + 1);
+    console.log('✕ Passed:', track.name);
   }, []);
 
   const handleReset = useCallback(() => {
-    setDeck(PLACEHOLDER_TRACKS);
     setLikedCount(0);
     setPassedCount(0);
-  }, []);
+    fetchSongs();
+  }, [fetchSongs]);
 
   return (
     <div className="h-full flex flex-col bg-[#121212]">
@@ -35,8 +92,8 @@ const App = () => {
           deck={deck}
           onLike={handleLike}
           onPass={handlePass}
-          isLoading={false}
-          isEmpty={deck.length === 0}
+          isLoading={isLoading}
+          isEmpty={!isLoading && deck.length === 0}
           onReset={handleReset}
         />
       </main>
