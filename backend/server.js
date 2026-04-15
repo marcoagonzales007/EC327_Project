@@ -6,7 +6,7 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// 🔑 Get Spotify token
+// Get Spotify token
 async function getSpotifyToken() {
   const response = await axios.post(
     "https://accounts.spotify.com/api/token",
@@ -28,7 +28,7 @@ async function getSpotifyToken() {
   return response.data.access_token;
 }
 
-// 🎵 Get songs from Spotify (dynamic + filtered)
+// Get songs from Spotify (dynamic + filtered)
 app.get("/songs", async (req, res) => {
   try {
     const token = await getSpotifyToken();
@@ -49,7 +49,7 @@ app.get("/songs", async (req, res) => {
     );
 
     const songs = response.data.tracks.items
-      .filter((track) => track.preview_url) // ✅ filter songs with previews
+      .filter((track) => track.preview_url) // filter songs with previews
       .map((track) => ({
         spotifyId: track.id,
         title: track.name,
@@ -66,13 +66,13 @@ app.get("/songs", async (req, res) => {
   }
 });
 
-// 🏠 Root route
+// Root route
 app.get("/", (req, res) => {
   console.log("Root route hit");
   res.send("Backend is running");
 });
 
-// 🔍 Test Firestore connection
+// Test Firestore connection
 app.get("/test-db", async (req, res) => {
   try {
     const doc = await db.collection("users").doc("testUser123").get();
@@ -88,7 +88,7 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// ❤️ Save liked song
+// Save liked song
 app.post("/like", async (req, res) => {
   const { uid, song } = req.body;
 
@@ -115,7 +115,7 @@ app.post("/like", async (req, res) => {
   }
 });
 
-// 📂 Get liked songs
+// Get liked songs
 app.get("/likedSongs/:uid", async (req, res) => {
   const { uid } = req.params;
 
