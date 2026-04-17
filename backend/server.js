@@ -17,7 +17,7 @@ async function getSpotifyToken() {
         Authorization:
           "Basic " +
           Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET
+            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
           ).toString("base64"),
       },
     }
@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 // Tests Firestore connection by returning test user document
 app.get("/test-db", async (req, res) => {
   try {
-    const doc = await db.collection("users").doc("testUser").get();
+    const doc = await db.collection("users").doc("testUser123").get();
 
     if (!doc.exists) {
       return res.status(404).json({ error: "Test user not found" });
@@ -44,6 +44,7 @@ app.get("/test-db", async (req, res) => {
 
     res.json(doc.data());
   } catch (error) {
+    console.error("Error reading Firestore:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -53,7 +54,7 @@ app.get("/test-db", async (req, res) => {
 app.get("/songs", async (req, res) => {
   try {
     const token = await getSpotifyToken();
-    const query = req.query.q;
+    const query = req.query.q || "pop";
 
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: {
@@ -69,15 +70,16 @@ app.get("/songs", async (req, res) => {
     const songs = response.data.tracks.items.map((track) => ({
       spotifyId: track.id,
       title: track.name,
-      artist: track.artists[0]?.name || "",
+      artist: track.artists?.[0]?.name || "",
       album: track.album?.name || "",
-      imageUrl: track.album?.images[0]?.url || "",
+      imageUrl: track.album?.images?.[0]?.url || "",
       previewUrl: track.preview_url || "",
     }));
 
     res.json(songs);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Spotify error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch songs" });
   }
 });
 
@@ -87,6 +89,10 @@ app.post("/like", async (req, res) => {
   try {
     const { uid, song } = req.body;
 
+    if (!uid || !song || !song.spotifyId) {
+      return res.status(400).json({ error: "Missing uid or song data" });
+    }
+
     await db
       .collection("users")
       .doc(uid)
@@ -94,16 +100,17 @@ app.post("/like", async (req, res) => {
       .doc(song.spotifyId)
       .set({
         spotifyId: song.spotifyId,
-        title: song.title,
-        artist: song.artist,
-        album: song.album,
-        imageUrl: song.imageUrl,
-        previewUrl: song.previewUrl,
+        title: song.title || "",
+        artist: song.artist || "",
+        album: song.album || "",
+        imageUrl: song.imageUrl || "",
+        previewUrl: song.previewUrl || "",
         likedAt: new Date(),
       });
 
     res.json({ message: "Song saved successfully" });
   } catch (error) {
+    console.error("Error saving song:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -120,16 +127,20 @@ app.get("/likedSongs/:uid", async (req, res) => {
       .collection("likedSongs")
       .get();
 
-    const likedSongs = snapshot.docs.map((doc) => doc.data());
+    const likedSongs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     res.json(likedSongs);
   } catch (error) {
+    console.error("Error reading liked songs:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
 // Start server
 const PORT = 3000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
