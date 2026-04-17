@@ -1,12 +1,12 @@
 require("dotenv").config();
 const express = require("express");
-const db = require("./firebase");
 const axios = require("axios");
+const db = require("./firebase");
 
 const app = express();
 app.use(express.json());
 
-// Get Spotify token
+// Get Spotify access token
 async function getSpotifyToken() {
   const response = await axios.post(
     "https://accounts.spotify.com/api/token",
@@ -17,9 +17,7 @@ async function getSpotifyToken() {
         Authorization:
           "Basic " +
           Buffer.from(
-            process.env.SPOTIFY_CLIENT_ID +
-              ":" +
-              process.env.SPOTIFY_CLIENT_SECRET
+            process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET
           ).toString("base64"),
       },
     }
@@ -28,71 +26,67 @@ async function getSpotifyToken() {
   return response.data.access_token;
 }
 
-// Get songs from Spotify (dynamic + filtered)
-app.get("/songs", async (req, res) => {
-  try {
-    const token = await getSpotifyToken();
-    const query = req.query.q || "pop";
-
-    const response = await axios.get(
-      "https://api.spotify.com/v1/search",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          q: query,
-          type: "track",
-          limit: 10,
-        },
-      }
-    );
-
-    const songs = response.data.tracks.items
-      .filter((track) => track.preview_url) // filter songs with previews
-      .map((track) => ({
-        spotifyId: track.id,
-        title: track.name,
-        artist: track.artists[0]?.name || "",
-        album: track.album?.name || "",
-        imageUrl: track.album?.images?.[0]?.url || "",
-        previewUrl: track.preview_url || "",
-      }));
-
-    res.json(songs);
-  } catch (error) {
-    console.error("Spotify error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch songs" });
-  }
-});
-
-// Root route
+// GET /
+// Checks if backend is running
 app.get("/", (req, res) => {
-  console.log("Root route hit");
   res.send("Backend is running");
 });
 
-// Test Firestore connection
+// GET /test-db
+// Tests Firestore connection by returning test user document
 app.get("/test-db", async (req, res) => {
   try {
-    const doc = await db.collection("users").doc("testUser123").get();
+    const doc = await db.collection("users").doc("testUser").get();
 
     if (!doc.exists) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Test user not found" });
     }
 
     res.json(doc.data());
   } catch (error) {
-    console.error("Error reading Firestore:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Save liked song
-app.post("/like", async (req, res) => {
-  const { uid, song } = req.body;
-
+// GET /songs?q=...
+// Fetch songs from Spotify based on search query
+app.get("/songs", async (req, res) => {
   try {
+    const token = await getSpotifyToken();
+    const query = req.query.q;
+
+    const response = await axios.get("https://api.spotify.com/v1/search", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        q: query,
+        type: "track",
+        limit: 10,
+      },
+    });
+
+    const songs = response.data.tracks.items.map((track) => ({
+      spotifyId: track.id,
+      title: track.name,
+      artist: track.artists[0]?.name || "",
+      album: track.album?.name || "",
+      imageUrl: track.album?.images[0]?.url || "",
+      previewUrl: track.preview_url || "",
+    }));
+
+    res.json(songs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /like
+// Save liked song for a user
+app.post("/like", async (req, res) => {
+  try {
+    const { uid, song } = req.body;
+
     await db
       .collection("users")
       .doc(uid)
@@ -102,43 +96,40 @@ app.post("/like", async (req, res) => {
         spotifyId: song.spotifyId,
         title: song.title,
         artist: song.artist,
-        album: song.album || "",
-        imageUrl: song.imageUrl || "",
-        previewUrl: song.previewUrl || "",
+        album: song.album,
+        imageUrl: song.imageUrl,
+        previewUrl: song.previewUrl,
         likedAt: new Date(),
       });
 
-    res.status(200).json({ message: "Song saved successfully" });
+    res.json({ message: "Song saved successfully" });
   } catch (error) {
-    console.error("Error saving song:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get liked songs
+// GET /likedSongs/:uid
+// Retrieve liked songs for a user
 app.get("/likedSongs/:uid", async (req, res) => {
-  const { uid } = req.params;
-
   try {
+    const { uid } = req.params;
+
     const snapshot = await db
       .collection("users")
       .doc(uid)
       .collection("likedSongs")
       .get();
 
-    const songs = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const likedSongs = snapshot.docs.map((doc) => doc.data());
 
-    res.json(songs);
+    res.json(likedSongs);
   } catch (error) {
-    console.error("Error reading liked songs:", error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// 🚀 Start server (ALWAYS LAST)
-app.listen(3000, "0.0.0.0", () => {
-  console.log("Server running on port 3000");
+// Start server
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
