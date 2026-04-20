@@ -5,6 +5,7 @@ const cors = require("cors");
 const db = require("./firebase");
 
 const app = express();
+const spotifyPreviewFinder = require("spotify-preview-finder");
 
 app.use(cors({
   origin: "http://localhost:5173"
@@ -72,16 +73,37 @@ app.get("/songs", async (req, res) => {
       },
     });
 
-    const songs = response.data.tracks.items
-      //.filter((track) => track.preview_url)
-      .map((track) => ({
-        spotifyId: track.id,
-        title: track.name,
-        artist: track.artists?.[0]?.name || "",
-        album: track.album?.name || "",
-        imageUrl: track.album?.images?.[0]?.url || "",
-        previewUrl: track.preview_url || "",
-      }));
+    const songs = await Promise.all(
+      response.data.tracks.items.map(async (track) => {
+        let preview = track.preview_url || "";
+
+        // Fallback if Spotify has no preview
+        if (!preview) {
+          try {
+            const result = await spotifyPreviewFinder(
+              track.name,
+              track.artists?.[0]?.name,
+              1
+            );
+
+            if (result.success && result.results.length > 0) {
+              preview = result.results[0].previewUrls[0] || "";
+            }
+          } catch (err) {
+            console.log("Preview finder failed:", err.message);
+          }
+        }
+
+        return {
+          spotifyId: track.id,
+          title: track.name,
+          artist: track.artists?.[0]?.name || "",
+          album: track.album?.name || "",
+          imageUrl: track.album?.images?.[0]?.url || "",
+          previewUrl: preview,
+        };
+      })
+    );
 
     res.json(songs);
   } catch (error) {

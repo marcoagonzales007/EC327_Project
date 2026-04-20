@@ -55,15 +55,24 @@ const SongCard = forwardRef(({
   const audioRef = useRef(null);
 
   const toggleAudio = useCallback((e) => {
-    e.stopPropagation(); // Don't accidentally start a drag from the button
+    e.stopPropagation();
+
+    console.log("Preview URL:", track?.preview_url);
+
     if (!track?.preview_url || !audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => { });
-      setIsPlaying(true);
+      audioRef.current.play()
+        .then(() => {
+          console.log("Audio started playing");
+          setIsPlaying(true);
+        })
+        .catch((err) => {
+          console.error("Audio play failed:", err);
+        });
     }
   }, [isPlaying, track?.preview_url]);
 
@@ -289,6 +298,7 @@ const SongCard = forwardRef(({
           src={track.preview_url}
           onEnded={() => setIsPlaying(false)}
           preload="none"
+
         />
       )}
     </motion.div>
