@@ -112,15 +112,17 @@ const App = () => {
     <div className="h-full flex flex-col bg-[#121212]">
       <Header likedCount={likedCount} passedCount={passedCount} />
 
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <CardStack
-          deck={deck}
-          onLike={handleLike}
-          onPass={handlePass}
-          isLoading={isLoading}
-          isEmpty={!isLoading && deck.length === 0}
-          onReset={handleReset}
-        />
+      <main className="flex-1 flex items-center justify-center overflow-hidden min-h-0 px-4 py-6">
+        <div className="relative w-full max-w-sm h-[70vh] max-h-[720px]">
+          <CardStack
+            deck={deck}
+            onLike={handleLike}
+            onPass={handlePass}
+            isLoading={isLoading}
+            isEmpty={!isLoading && deck.length === 0}
+            onReset={handleReset}
+          />
+        </div>
       </main>
     </div>
   );

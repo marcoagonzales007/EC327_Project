@@ -199,8 +199,8 @@ const SongCard = forwardRef(({
         </motion.div>
 
         {/* ── Bottom info panel (glassmorphism) ────────────────────────────── */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-          <div className="glass-dark rounded-2xl p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-30">
+          <div className="bg-black/85 backdrop-blur-sm rounded-2xl p-4">
 
             <div className="flex items-start gap-3">
               {/* Track text */}
@@ -211,7 +211,7 @@ const SongCard = forwardRef(({
                 <p className="text-gray-300 text-sm mt-0.5 truncate">
                   {artistNames}
                 </p>
-                <p className="text-gray-500 text-xs mt-0.5 truncate">
+                <p className="text-gray-300 text-xs mt-0.5 truncate">
                   {albumName}
                 </p>
               </div>
@@ -254,7 +254,7 @@ const SongCard = forwardRef(({
             {/* Popularity bar */}
             {popularity !== undefined && (
               <div className="flex items-center gap-2 mt-3">
-                <span className="text-gray-600 text-[11px] w-16 flex-shrink-0">
+                <span className="text-gray-400 text-[11px] w-16 flex-shrink-0">
                   Popularity
                 </span>
                 <div className="flex-1 bg-gray-700/60 rounded-full h-1 overflow-hidden">
@@ -265,7 +265,7 @@ const SongCard = forwardRef(({
                     transition={{ delay: 0.4, duration: 0.9, ease: 'easeOut' }}
                   />
                 </div>
-                <span className="text-gray-600 text-[11px] w-6 text-right">
+                <span className="text-gray-400 text-[11px] w-16 flex-shrink-0">
                   {popularity}
                 </span>
               </div>
@@ -273,7 +273,7 @@ const SongCard = forwardRef(({
 
             {/* No preview notice */}
             {!hasPreview && (
-              <p className="text-gray-600 text-[11px] mt-2 flex items-center gap-1">
+              <p className="text-gray-400 text-[11px] mt-2 flex items-center gap-1">
                 <InfoIcon className="w-3 h-3 flex-shrink-0" />
                 No audio preview for this track
               </p>
