@@ -1,9 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
+const cors = require("cors");
 const db = require("./firebase");
 
 const app = express();
+
+app.use(cors({
+  origin: "http://localhost:5173"
+}));
 app.use(express.json());
 
 // Get Spotify access token
@@ -67,14 +72,16 @@ app.get("/songs", async (req, res) => {
       },
     });
 
-    const songs = response.data.tracks.items.map((track) => ({
-      spotifyId: track.id,
-      title: track.name,
-      artist: track.artists?.[0]?.name || "",
-      album: track.album?.name || "",
-      imageUrl: track.album?.images?.[0]?.url || "",
-      previewUrl: track.preview_url || "",
-    }));
+    const songs = response.data.tracks.items
+      //.filter((track) => track.preview_url)
+      .map((track) => ({
+        spotifyId: track.id,
+        title: track.name,
+        artist: track.artists?.[0]?.name || "",
+        album: track.album?.name || "",
+        imageUrl: track.album?.images?.[0]?.url || "",
+        previewUrl: track.preview_url || "",
+      }));
 
     res.json(songs);
   } catch (error) {

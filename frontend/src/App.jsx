@@ -2,18 +2,32 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import CardStack from './components/CardStack';
 
+const formatSongs = (data) =>
+  data.map((song) => ({
+    id: song.spotifyId,
+    name: song.title,
+    artists: [{ name: song.artist }],
+    album: {
+      name: song.album,
+      images: [{ url: song.imageUrl }],
+    },
+    preview_url: song.previewUrl,
+    popularity: 50,
+  }));
+
 const App = () => {
   const [deck, setDeck] = useState([]);
   const [likedCount, setLikedCount] = useState(0);
   const [passedCount, setPassedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchSongs = useCallback(() => {
+  const fetchSongs = useCallback((query = 'pop', append = false) => {
     setIsLoading(true);
 
-    fetch('http://localhost:3000/songs?q=pop')
+    fetch(`http://localhost:3000/songs?q=${encodeURIComponent(query)}`)
       .then((res) => res.json())
       .then((data) => {
+        console.log('Songs from backend:', data);
         const formatted = data.map((song) => ({
           id: song.spotifyId,
           name: song.title,
@@ -26,7 +40,12 @@ const App = () => {
           popularity: 50,
         }));
 
-        setDeck(formatted);
+        setDeck((prev) => {
+          const existingIds = new Set(prev.map((track) => track.id));
+          const newTracks = formatted.filter((track) => !existingIds.has(track.id));
+
+          return append ? [...prev, ...newTracks] : newTracks;
+        });
       })
       .catch((err) => {
         console.error('Error fetching songs:', err);
@@ -68,8 +87,14 @@ const App = () => {
 
     setDeck((prev) => prev.filter((t) => t.id !== track.id));
     setLikedCount((prev) => prev + 1);
+
+    const artistName = track.artists[0]?.name;
+    if (artistName) {
+      fetchSongs(artistName, true);
+    }
+
     console.log('❤️ Liked:', track.name);
-  }, []);
+  }, [fetchSongs]);
 
   const handlePass = useCallback((track) => {
     setDeck((prev) => prev.filter((t) => t.id !== track.id));

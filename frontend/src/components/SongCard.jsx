@@ -14,8 +14,8 @@ import {
 
 // How far (px) or how fast (px/s) the user must drag to trigger a swipe
 const SWIPE_THRESHOLD = 100;
-const SWIPE_VELOCITY  = 600;
-const ROTATE_FACTOR   = 20; // max card tilt in degrees while dragging
+const SWIPE_VELOCITY = 600;
+const ROTATE_FACTOR = 20; // max card tilt in degrees while dragging
 
 /**
  * SongCard — one card in the deck.
@@ -42,12 +42,12 @@ const SongCard = forwardRef(({
 
   // ─── Animation controls ────────────────────────────────────────────────────
   const controls = useAnimation();
-  const x        = useMotionValue(0);
-  const y        = useMotionValue(0);
-  const rotate   = useTransform(x, [-300, 0, 300], [-ROTATE_FACTOR, 0, ROTATE_FACTOR]);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotate = useTransform(x, [-300, 0, 300], [-ROTATE_FACTOR, 0, ROTATE_FACTOR]);
 
   // These drive the LIKE / PASS stamp opacity as the card is dragged
-  const likeOpacity = useTransform(x, [20, SWIPE_THRESHOLD],   [0, 1]);
+  const likeOpacity = useTransform(x, [20, SWIPE_THRESHOLD], [0, 1]);
   const passOpacity = useTransform(x, [-SWIPE_THRESHOLD, -20], [1, 0]);
 
   // ─── Audio state (wired up in Checkpoint 3 when preview_url is real) ──────
@@ -62,7 +62,7 @@ const SongCard = forwardRef(({
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().catch(() => { });
       setIsPlaying(true);
     }
   }, [isPlaying, track?.preview_url]);
@@ -105,8 +105,8 @@ const SongCard = forwardRef(({
   const handleDragEnd = useCallback(async (_, { offset, velocity }) => {
     onDragUpdate?.(0);
 
-    const swipedRight = offset.x >  SWIPE_THRESHOLD || velocity.x >  SWIPE_VELOCITY;
-    const swipedLeft  = offset.x < -SWIPE_THRESHOLD || velocity.x < -SWIPE_VELOCITY;
+    const swipedRight = offset.x > SWIPE_THRESHOLD || velocity.x > SWIPE_VELOCITY;
+    const swipedLeft = offset.x < -SWIPE_THRESHOLD || velocity.x < -SWIPE_VELOCITY;
 
     if (swipedRight) {
       await controls.start({
@@ -132,11 +132,11 @@ const SongCard = forwardRef(({
   }, [controls, onLike, onPass, track, onDragUpdate]);
 
   // ─── Derived data ─────────────────────────────────────────────────────────
-  const albumArt    = track?.album?.images?.[0]?.url;
+  const albumArt = track?.album?.images?.[0]?.url;
   const artistNames = track?.artists?.map(a => a.name).join(', ') ?? '';
-  const albumName   = track?.album?.name ?? '';
-  const popularity  = track?.popularity;
-  const hasPreview  = Boolean(track?.preview_url);
+  const albumName = track?.album?.name ?? '';
+  const popularity = track?.popularity;
+  const hasPreview = Boolean(track?.preview_url);
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -161,7 +161,7 @@ const SongCard = forwardRef(({
           <img
             src={albumArt}
             alt={`${track?.name} album art`}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
             draggable={false}
           />
         ) : (
