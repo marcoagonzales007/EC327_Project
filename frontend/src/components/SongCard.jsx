@@ -229,14 +229,13 @@ const SongCard = forwardRef(({
               <button
                 onPointerDown={e => e.stopPropagation()}
                 onClick={toggleAudio}
-                disabled={!hasPreview}
                 className={`
-                  flex-shrink-0 w-12 h-12 rounded-full
-                  flex items-center justify-center
-                  transition-all duration-150 active:scale-90
-                  ${hasPreview
-                    ? 'bg-spotify-green shadow-green-glow hover:bg-green-400'
-                    : 'bg-spotify-gray opacity-40 cursor-not-allowed'}
+                    flex-shrink-0 w-12 h-12 rounded-full border
+                    flex items-center justify-center
+                    transition-all duration-150 active:scale-90
+                    ${hasPreview
+                    ? 'bg-spotify-green border-spotify-green shadow-green-glow hover:bg-green-400'
+                    : 'bg-white/10 border-white/20 text-white/70'}
                 `}
                 title={hasPreview ? 'Toggle preview' : 'No preview available'}
               >
@@ -310,12 +309,12 @@ export default SongCard;
 
 // ─── Small inline SVG icons ────────────────────────────────────────────────────
 const PlayIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-black ml-0.5" aria-hidden>
+  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white ml-0.5" aria-hidden>
     <path d="M8 5v14l11-7z" />
   </svg>
 );
 const PauseIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-black" aria-hidden>
+  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" aria-hidden>
     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
   </svg>
 );

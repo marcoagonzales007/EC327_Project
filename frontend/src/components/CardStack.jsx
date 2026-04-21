@@ -1,9 +1,9 @@
 import React, { useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import SongCard      from './SongCard';
+import SongCard from './SongCard';
 import ActionButtons from './ActionButtons';
 import LoadingSpinner from './LoadingSpinner';
-import EmptyState    from './EmptyState';
+import EmptyState from './EmptyState';
 
 /**
  * CardStack — renders the top 3 cards from the deck as a layered stack.
@@ -25,11 +25,11 @@ const CardStack = ({
   // topX tracks the horizontal drag offset of the top card (MotionValue).
   // We pass it into useTransform to drive background card scale/position
   // without any setState calls — pure motion interpolation.
-  const topX     = useMotionValue(0);
+  const topX = useMotionValue(0);
   const bgScale1 = useTransform(topX, [-200, 0, 200], [1.00, 0.96, 1.00]);
-  const bgY1     = useTransform(topX, [-200, 0, 200], [6,   12,   6  ]);
+  const bgY1 = useTransform(topX, [-200, 0, 200], [6, 12, 6]);
   const bgScale2 = useTransform(topX, [-200, 0, 200], [0.95, 0.92, 0.95]);
-  const bgY2     = useTransform(topX, [-200, 0, 200], [18,  22,   18  ]);
+  const bgY2 = useTransform(topX, [-200, 0, 200], [18, 22, 18]);
 
   const handleLikeButton = useCallback(() => topCardRef.current?.triggerLike(), []);
   const handlePassButton = useCallback(() => topCardRef.current?.triggerPass(), []);
@@ -41,7 +41,7 @@ const CardStack = ({
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
         <LoadingSpinner size="lg" />
         <p className="text-spotify-light-gray text-sm animate-pulse">
           Building your playlist...
@@ -56,7 +56,7 @@ const CardStack = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between py-3 px-4 gap-4 overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-center pt-2 pb-10 px-4 gap-6 overflow-hidden">
 
       {/*
         Aspect-ratio container trick:
@@ -64,7 +64,7 @@ const CardStack = ({
         136% ≈ a slightly-taller-than-square card (like a phone screen).
         All cards use absolute inset-0 inside this box.
       */}
-      <div className="relative w-full max-w-sm" style={{ paddingBottom: '136%' }}>
+      <div className="relative w-full max-w-sm -mt-4" style={{ paddingBottom: '136%' }}>
         <div className="absolute inset-0">
 
           {/* Card 2 — furthest back */}
@@ -120,11 +120,13 @@ const CardStack = ({
       </div>
 
       {/* Action buttons */}
-      <ActionButtons
-        onPass={handlePassButton}
-        onLike={handleLikeButton}
-        disabled={!card0}
-      />
+      <div className="mt-2 mb-10">
+        <ActionButtons
+          onPass={handlePassButton}
+          onLike={handleLikeButton}
+          disabled={!card0}
+        />
+      </div>
     </div>
   );
 };

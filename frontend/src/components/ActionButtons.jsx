@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
  * In Checkpoint 3 they will call programmatic swipe methods on the card ref.
  */
 const ActionButtons = ({ onPass, onLike, disabled = false }) => (
-  <div className="flex-shrink-0 flex items-center justify-center gap-8 pb-2">
+  <div className="flex items-center justify-center gap-8">
 
     {/* Pass button */}
     <ActionButton
@@ -67,7 +67,7 @@ const ActionButton = ({ onClick, disabled, colorClass, size, children, 'aria-lab
       ${colorClass}
     `}
     whileHover={!disabled ? { scale: 1.12 } : {}}
-    whileTap={!disabled  ? { scale: 0.90 } : {}}
+    whileTap={!disabled ? { scale: 0.90 } : {}}
     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
   >
     {children}

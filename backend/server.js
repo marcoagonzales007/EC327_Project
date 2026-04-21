@@ -2,10 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const spotifyPreviewFinder = require("spotify-preview-finder");
 const db = require("./firebase");
 
 const app = express();
-const spotifyPreviewFinder = require("spotify-preview-finder");
 
 app.use(cors({
   origin: "http://localhost:5173"
@@ -55,12 +55,30 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// GET /songs?q=...
-// Fetch songs from Spotify based on search query
+// GET /songs?q=...&uid=...
+// Fetch songs from Spotify, exclude liked/passed songs, and try preview fallback
 app.get("/songs", async (req, res) => {
   try {
     const token = await getSpotifyToken();
     const query = req.query.q || "pop";
+    const uid = req.query.uid || "testUser123";
+
+    const likedSnapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("likedSongs")
+      .get();
+
+    const passedSnapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("passedSongs")
+      .get();
+
+    const excludedIds = new Set([
+      ...likedSnapshot.docs.map((doc) => doc.id),
+      ...passedSnapshot.docs.map((doc) => doc.id),
+    ]);
 
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: {
@@ -69,28 +87,35 @@ app.get("/songs", async (req, res) => {
       params: {
         q: query,
         type: "track",
-        limit: 10,
+        limit: 20,
       },
     });
 
+    const filteredTracks = response.data.tracks.items.filter(
+      (track) => !excludedIds.has(track.id)
+    );
+
     const songs = await Promise.all(
-      response.data.tracks.items.map(async (track) => {
+      filteredTracks.map(async (track) => {
         let preview = track.preview_url || "";
 
-        // Fallback if Spotify has no preview
         if (!preview) {
           try {
             const result = await spotifyPreviewFinder(
               track.name,
-              track.artists?.[0]?.name,
+              track.artists?.[0]?.name || "",
               1
             );
 
-            if (result.success && result.results.length > 0) {
-              preview = result.results[0].previewUrls[0] || "";
+            if (
+              result.success &&
+              result.results.length > 0 &&
+              result.results[0].previewUrls.length > 0
+            ) {
+              preview = result.results[0].previewUrls[0];
             }
           } catch (err) {
-            console.log("Preview finder failed:", err.message);
+            console.error("Preview finder failed:", err.message);
           }
         }
 
@@ -140,6 +165,38 @@ app.post("/like", async (req, res) => {
     res.json({ message: "Song saved successfully" });
   } catch (error) {
     console.error("Error saving song:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /pass
+// Save passed song for a user
+app.post("/pass", async (req, res) => {
+  try {
+    const { uid, song } = req.body;
+
+    if (!uid || !song || !song.spotifyId) {
+      return res.status(400).json({ error: "Missing uid or song data" });
+    }
+
+    await db
+      .collection("users")
+      .doc(uid)
+      .collection("passedSongs")
+      .doc(song.spotifyId)
+      .set({
+        spotifyId: song.spotifyId,
+        title: song.title || "",
+        artist: song.artist || "",
+        album: song.album || "",
+        imageUrl: song.imageUrl || "",
+        previewUrl: song.previewUrl || "",
+        passedAt: new Date(),
+      });
+
+    res.json({ message: "Song passed successfully" });
+  } catch (error) {
+    console.error("Error saving passed song:", error);
     res.status(500).json({ error: error.message });
   }
 });
