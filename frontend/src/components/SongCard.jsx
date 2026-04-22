@@ -53,12 +53,14 @@ const SongCard = forwardRef(({
   // ─── Audio state (wired up in Checkpoint 3 when preview_url is real) ──────
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+  const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(track?.preview_url || "");
 
   const toggleAudio = useCallback(async (e) => {
     e.stopPropagation();
 
-    let previewUrl = track?.preview_url || "";
-    console.log("Initial preview from track:", previewUrl);
+    let previewUrl = resolvedPreviewUrl || "";
+
+    console.log("Initial preview from track/state:", previewUrl);
 
     if (!previewUrl) {
       try {
@@ -68,8 +70,13 @@ const SongCard = forwardRef(({
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log("Preview fallback response:", data);
+        console.log("Preview fallback response:", JSON.stringify(data, null, 2));
+
         previewUrl = data.previewUrl || "";
+
+        if (previewUrl) {
+          setResolvedPreviewUrl(previewUrl);
+        }
       } catch (err) {
         console.error("Preview fallback failed:", err);
       }
@@ -81,7 +88,6 @@ const SongCard = forwardRef(({
     }
 
     audioRef.current.src = previewUrl;
-    console.log("Final preview URL being played:", previewUrl);
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -96,7 +102,7 @@ const SongCard = forwardRef(({
           console.error("Audio play failed:", err);
         });
     }
-  }, [isPlaying, track]);
+  }, [isPlaying, resolvedPreviewUrl, track]);
 
   // ─── Programmatic swipe (exposed via ref for ActionButtons) ───────────────
   const triggerLike = useCallback(async () => {
@@ -167,7 +173,7 @@ const SongCard = forwardRef(({
   const artistNames = track?.artists?.map(a => a.name).join(', ') ?? '';
   const albumName = track?.album?.name ?? '';
   const popularity = track?.popularity;
-  const hasPreview = Boolean(track?.preview_url);
+  const hasPreview = Boolean(resolvedPreviewUrl);
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -316,7 +322,7 @@ const SongCard = forwardRef(({
       {hasPreview && (
         <audio
           ref={audioRef}
-          src={track.preview_url}
+          src={resolvedPreviewUrl}
           onEnded={() => setIsPlaying(false)}
           preload="none"
         />

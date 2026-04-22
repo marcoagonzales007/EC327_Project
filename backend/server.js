@@ -118,9 +118,17 @@ app.get("/preview", async (req, res) => {
       return res.status(400).json({ error: "Missing song name" });
     }
 
-    const result = await spotifyPreviewFinder(song, artist, 1);
+    const cleanSong = song
+      .replace(/\(feat\..*?\)/gi, "")
+      .replace(/\(ft\..*?\)/gi, "")
+      .replace(/\+.*$/g, "")
+      .replace(/-.*$/g, "")
+      .trim();
 
     let previewUrl = "";
+
+    // Try original title first
+    let result = await spotifyPreviewFinder(song, artist, 1);
 
     if (
       result.success &&
@@ -130,6 +138,21 @@ app.get("/preview", async (req, res) => {
       result.results[0].previewUrls.length > 0
     ) {
       previewUrl = result.results[0].previewUrls[0];
+    }
+
+    // Fallback: try cleaned title
+    if (!previewUrl && cleanSong && cleanSong !== song) {
+      result = await spotifyPreviewFinder(cleanSong, artist, 1);
+
+      if (
+        result.success &&
+        result.results &&
+        result.results.length > 0 &&
+        result.results[0].previewUrls &&
+        result.results[0].previewUrls.length > 0
+      ) {
+        previewUrl = result.results[0].previewUrls[0];
+      }
     }
 
     res.json({ previewUrl });
