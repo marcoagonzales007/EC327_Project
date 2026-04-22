@@ -1,10 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-const seenIdsRef = useRef(new Set());
-const markSeen = useCallback((trackId) => {
-  if (trackId) {
-    seenIdsRef.current.add(trackId);
-  }
-}, []);
+import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import CardStack from './components/CardStack';
 
@@ -33,16 +27,22 @@ const App = () => {
     fetch(`http://localhost:3000/songs?q=${encodeURIComponent(query)}&uid=testUser123`)
       .then((res) => res.json())
       .then((data) => {
-        const formatted = formatSongs(data);
+        console.log('Songs from backend:', data);
+        const formatted = data.map((song) => ({
+          id: song.spotifyId,
+          name: song.title,
+          artists: [{ name: song.artist }],
+          album: {
+            name: song.album,
+            images: [{ url: song.imageUrl }],
+          },
+          preview_url: song.previewUrl,
+          popularity: 50,
+        }));
 
         setDeck((prev) => {
           const existingIds = new Set(prev.map((track) => track.id));
-
-          const newTracks = formatted.filter(
-            (track) =>
-              !existingIds.has(track.id) &&
-              !seenIdsRef.current.has(track.id)
-          );
+          const newTracks = formatted.filter((track) => !existingIds.has(track.id));
 
           return append ? [...prev, ...newTracks] : newTracks;
         });
@@ -85,7 +85,6 @@ const App = () => {
         console.error('Error saving liked song:', err);
       });
 
-    markSeen(track.id);
     setDeck((prev) => prev.filter((t) => t.id !== track.id));
     setLikedCount((prev) => prev + 1);
 
@@ -95,9 +94,11 @@ const App = () => {
     }
 
     console.log('❤️ Liked:', track.name);
-  }, [fetchSongs, markSeen]);
+  }, [fetchSongs]);
 
   const handlePass = useCallback((track) => {
+    console.log("HANDLE PASS CALLED:", track);
+
     fetch('http://localhost:3000/pass', {
       method: 'POST',
       headers: {
@@ -129,7 +130,6 @@ const App = () => {
   }, []);
 
   const handleReset = useCallback(() => {
-    seenIdsRef.current = new Set();
     setLikedCount(0);
     setPassedCount(0);
     fetchSongs();
@@ -139,19 +139,16 @@ const App = () => {
     <div className="h-full flex flex-col bg-[#121212]">
       <Header likedCount={likedCount} passedCount={passedCount} />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pt-4 pb-6 min-h-0">
-        <div className="flex flex-col items-center justify-center gap-4 w-full">
-          {/* CARD */}
-          <div className="relative w-full max-w-sm h-[62vh] max-h-[640px]">
-            <CardStack
-              deck={deck}
-              onLike={handleLike}
-              onPass={handlePass}
-              isLoading={isLoading}
-              isEmpty={!isLoading && deck.length === 0}
-              onReset={handleReset}
-            />
-          </div>
+      <main className="flex-1 flex items-center justify-center overflow-hidden min-h-0 px-4 py-6">
+        <div className="relative w-full max-w-sm h-[70vh] max-h-[720px]">
+          <CardStack
+            deck={deck}
+            onLike={handleLike}
+            onPass={handlePass}
+            isLoading={isLoading}
+            isEmpty={!isLoading && deck.length === 0}
+            onReset={handleReset}
+          />
         </div>
       </main>
     </div>

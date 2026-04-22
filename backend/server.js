@@ -2,8 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const spotifyPreviewFinder = require("spotify-preview-finder");
 const db = require("./firebase");
+const spotifyPreviewFinder = require("spotify-preview-finder");
 
 const app = express();
 
@@ -55,8 +55,8 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// GET /songs?q=...&uid=...
-// Fetch songs from Spotify, exclude liked/passed songs, and try preview fallback
+// GET /songs?q=...
+// Fetch songs from Spotify based on search query
 app.get("/songs", async (req, res) => {
   try {
     const token = await getSpotifyToken();
@@ -87,53 +87,55 @@ app.get("/songs", async (req, res) => {
       params: {
         q: query,
         type: "track",
-        limit: 20,
+        limit: 10,
       },
     });
 
-    const filteredTracks = response.data.tracks.items.filter(
-      (track) => !excludedIds.has(track.id)
-    );
-
-    const songs = await Promise.all(
-      filteredTracks.map(async (track) => {
-        let preview = track.preview_url || "";
-
-        if (!preview) {
-          try {
-            const result = await spotifyPreviewFinder(
-              track.name,
-              track.artists?.[0]?.name || "",
-              1
-            );
-
-            if (
-              result.success &&
-              result.results.length > 0 &&
-              result.results[0].previewUrls.length > 0
-            ) {
-              preview = result.results[0].previewUrls[0];
-            }
-          } catch (err) {
-            console.error("Preview finder failed:", err.message);
-          }
-        }
-
-        return {
-          spotifyId: track.id,
-          title: track.name,
-          artist: track.artists?.[0]?.name || "",
-          album: track.album?.name || "",
-          imageUrl: track.album?.images?.[0]?.url || "",
-          previewUrl: preview,
-        };
-      })
-    );
+    const songs = response.data.tracks.items
+      .filter((track) => !excludedIds.has(track.id))
+      .map((track) => ({
+        spotifyId: track.id,
+        title: track.name,
+        artist: track.artists?.[0]?.name || "",
+        album: track.album?.name || "",
+        imageUrl: track.album?.images?.[0]?.url || "",
+        previewUrl: track.preview_url || "",
+      }));
 
     res.json(songs);
   } catch (error) {
     console.error("Spotify error:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to fetch songs" });
+  }
+});
+
+app.get("/preview", async (req, res) => {
+  try {
+    const song = req.query.song || "";
+    const artist = req.query.artist || "";
+
+    if (!song) {
+      return res.status(400).json({ error: "Missing song name" });
+    }
+
+    const result = await spotifyPreviewFinder(song, artist, 1);
+
+    let previewUrl = "";
+
+    if (
+      result.success &&
+      result.results &&
+      result.results.length > 0 &&
+      result.results[0].previewUrls &&
+      result.results[0].previewUrls.length > 0
+    ) {
+      previewUrl = result.results[0].previewUrls[0];
+    }
+
+    res.json({ previewUrl });
+  } catch (error) {
+    console.error("Preview finder error:", error.message);
+    res.status(500).json({ error: "Failed to fetch preview" });
   }
 });
 
@@ -169,8 +171,6 @@ app.post("/like", async (req, res) => {
   }
 });
 
-// POST /pass
-// Save passed song for a user
 app.post("/pass", async (req, res) => {
   try {
     const { uid, song } = req.body;
