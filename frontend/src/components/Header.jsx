@@ -1,38 +1,66 @@
 import React from 'react';
 
-/**
- * Header — top bar with logo + placeholder user avatar.
- * Stats (likedCount, passedCount) are wired up in Checkpoint 2.
- */
-const Header = ({ likedCount = 0, passedCount = 0 }) => (
-  <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/5">
-
-    {/* Logo */}
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 rounded-full bg-spotify-green flex items-center justify-center">
-        <SpotifyIcon className="w-4 h-4 fill-black" />
+const Header = ({
+  activeView,
+  onChangeView,
+  likedCount = 0,
+  passedCount = 0,
+  sessionLikedCount = 0,
+  dataMode = 'syncing',
+}) => (
+  <header className="panel-surface flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1ed760] shadow-[0_18px_50px_rgba(30,215,96,0.28)]">
+        <SpotifyIcon className="h-5 w-5 fill-black" />
       </div>
-      <span className="text-white font-bold text-lg leading-none">
-        Tune<span className="text-spotify-green">Swipe</span>
-      </span>
+
+      <div>
+        <p className="text-xs uppercase tracking-[0.24em] text-white/35">Spotify Tinder</p>
+        <h1 className="text-xl font-semibold tracking-tight text-white">
+          Tune<span className="text-[#7bffba]">Swipe</span>
+        </h1>
+      </div>
     </div>
 
-    {/* Session counters */}
-    <div className="flex items-center gap-3 text-xs text-gray-400">
-      <span>
-        <span className="text-spotify-green font-bold">{likedCount}</span> liked
-      </span>
-      <div className="w-px h-3 bg-gray-700" />
-      <span>
-        <span className="text-red-400 font-bold">{passedCount}</span> passed
-      </span>
-    </div>
+    <nav className="flex flex-wrap gap-2">
+      <HeaderTab
+        isActive={activeView === 'discover'}
+        onClick={() => onChangeView('discover')}
+        label="Discover"
+      />
+      <HeaderTab
+        isActive={activeView === 'liked'}
+        onClick={() => onChangeView('liked')}
+        label={`Liked Songs (${likedCount})`}
+      />
+    </nav>
 
-    {/* Placeholder avatar circle — replaced with real user data in Checkpoint 2 */}
-    <div className="w-8 h-8 rounded-full bg-spotify-gray flex items-center justify-center border border-white/10">
-      <span className="text-xs text-gray-400">?</span>
+    <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
+      <div className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5">
+        <span className="font-semibold text-emerald-200">{sessionLikedCount}</span> liked
+      </div>
+      <div className="rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-1.5">
+        <span className="font-semibold text-rose-200">{passedCount}</span> passed
+      </div>
+      <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+        {dataMode === 'backend' ? 'Synced' : dataMode === 'syncing' ? 'Syncing' : 'Local backup'}
+      </div>
     </div>
   </header>
+);
+
+const HeaderTab = ({ isActive, onClick, label }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+      isActive
+        ? 'bg-white text-black shadow-[0_12px_30px_rgba(255,255,255,0.18)]'
+        : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+    }`}
+  >
+    {label}
+  </button>
 );
 
 const SpotifyIcon = ({ className }) => (

@@ -5,12 +5,7 @@ import { motion } from 'framer-motion';
  * Shown when the user has swiped through every card in the deck.
  * onReset → rebuilds the deck (will call the API in later checkpoints)
  */
-const EmptyState = ({
-  onReset,
-  title = "You've heard it all!",
-  message = 'You swiped through the whole deck. Want to go again?',
-  actionLabel = 'Shuffle Again',
-}) => (
+const EmptyState = ({ onReset }) => (
   <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
 
     <motion.div
@@ -23,10 +18,12 @@ const EmptyState = ({
 
     <div>
       <h2 className="text-white font-bold text-2xl mb-2">
-        {title}
+        You've heard it all!
       </h2>
       <p className="text-spotify-light-gray text-sm leading-relaxed">
-        {message}
+        You swiped through the whole deck.
+        <br />
+        Want to go again?
       </p>
     </div>
 
@@ -41,7 +38,7 @@ const EmptyState = ({
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.96 }}
     >
-      {actionLabel}
+      Shuffle Again
     </motion.button>
   </div>
 );

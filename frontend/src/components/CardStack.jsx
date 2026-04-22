@@ -19,6 +19,9 @@ const CardStack = ({
   isLoading,
   isEmpty,
   onReset,
+  emptyTitle,
+  emptyMessage,
+  emptyActionLabel,
 }) => {
   const topCardRef = useRef(null);
 
@@ -52,11 +55,18 @@ const CardStack = ({
 
   // ── Empty ────────────────────────────────────────────────────────────────
   if (isEmpty) {
-    return <EmptyState onReset={onReset} />;
+    return (
+      <EmptyState
+        onReset={onReset}
+        title={emptyTitle}
+        message={emptyMessage}
+        actionLabel={emptyActionLabel}
+      />
+    );
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-between py-3 px-4 gap-4 overflow-hidden">
+    <div className="flex-1 flex flex-col items-center justify-between gap-4 overflow-hidden px-4 py-4 sm:px-6">
 
       {/*
         Aspect-ratio container trick:
