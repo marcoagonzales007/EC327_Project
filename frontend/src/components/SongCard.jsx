@@ -2,9 +2,11 @@ import React, {
   useState,
   useRef,
   useCallback,
+  useEffect,
   forwardRef,
   useImperativeHandle,
 } from 'react';
+
 import {
   motion,
   useAnimation,
@@ -55,39 +57,50 @@ const SongCard = forwardRef(({
   const audioRef = useRef(null);
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(track?.preview_url || "");
 
-  const toggleAudio = useCallback(async (e) => {
-    e.stopPropagation();
+  useEffect(() => {
+    let cancelled = false;
 
-    let previewUrl = resolvedPreviewUrl || "";
+    const loadPreview = async () => {
+      // Reset when card changes
+      setResolvedPreviewUrl(track?.preview_url || "");
+      setIsPlaying(false);
 
-    console.log("Initial preview from track/state:", previewUrl);
+      // If Spotify already gave a preview, use it
+      if (track?.preview_url) return;
 
-    if (!previewUrl) {
       try {
         const url = `http://localhost:3000/preview?song=${encodeURIComponent(track?.name || "")}&artist=${encodeURIComponent(track?.artists?.[0]?.name || "")}`;
-        console.log("Requesting fallback preview from:", url);
-
         const res = await fetch(url);
         const data = await res.json();
 
-        console.log("Preview fallback response:", JSON.stringify(data, null, 2));
-
-        previewUrl = data.previewUrl || "";
-
-        if (previewUrl) {
-          setResolvedPreviewUrl(previewUrl);
+        if (!cancelled && data.previewUrl) {
+          setResolvedPreviewUrl(data.previewUrl);
         }
       } catch (err) {
-        console.error("Preview fallback failed:", err);
+        console.error("Preview preload failed:", err);
       }
+    };
+
+    // Only preload for the top card
+    if (isTop) {
+      loadPreview();
+    } else {
+      setResolvedPreviewUrl(track?.preview_url || "");
+      setIsPlaying(false);
     }
 
-    if (!previewUrl || !audioRef.current) {
-      console.log("No preview available after fallback");
+    return () => {
+      cancelled = true;
+    };
+  }, [track, isTop]);
+
+  const toggleAudio = useCallback((e) => {
+    e.stopPropagation();
+
+    if (!resolvedPreviewUrl || !audioRef.current) {
+      console.log("No preview available");
       return;
     }
-
-    audioRef.current.src = previewUrl;
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -102,7 +115,7 @@ const SongCard = forwardRef(({
           console.error("Audio play failed:", err);
         });
     }
-  }, [isPlaying, resolvedPreviewUrl, track]);
+  }, [isPlaying, resolvedPreviewUrl]);
 
   // ─── Programmatic swipe (exposed via ref for ActionButtons) ───────────────
   const triggerLike = useCallback(async () => {
@@ -324,7 +337,7 @@ const SongCard = forwardRef(({
           ref={audioRef}
           src={resolvedPreviewUrl}
           onEnded={() => setIsPlaying(false)}
-          preload="none"
+          preload="auto"
         />
       )}
     </motion.div>

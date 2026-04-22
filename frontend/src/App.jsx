@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import CardStack from './components/CardStack';
 
+const starterQueries = ['pop', 'drake', 'weeknd', 'travis scott', 'the weeknd'];
+
 const formatSongs = (data) =>
   data.map((song) => ({
     id: song.spotifyId,
@@ -25,20 +27,37 @@ const App = () => {
     setIsLoading(true);
 
     fetch(`http://localhost:3000/songs?q=${encodeURIComponent(query)}&uid=testUser123`)
-      .then((res) => res.json())
+      .then(async (res) => {
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to fetch songs');
+        }
+
+        return data;
+      })
       .then((data) => {
         console.log('Songs from backend:', data);
-        const formatted = data.map((song) => ({
-          id: song.spotifyId,
-          name: song.title,
-          artists: [{ name: song.artist }],
-          album: {
-            name: song.album,
-            images: [{ url: song.imageUrl }],
-          },
-          preview_url: song.previewUrl,
-          popularity: 50,
-        }));
+
+        if (!data.length && query === 'pop') {
+          return fetch('http://localhost:3000/songs?q=drake&uid=testUser123')
+            .then(async (res) => {
+              const fallbackData = await res.json();
+
+              if (!res.ok) {
+                throw new Error(fallbackData.error || 'Failed to fetch fallback songs');
+              }
+
+              return fallbackData;
+            })
+            .then((fallbackData) => {
+              console.log('Fallback songs from backend:', fallbackData);
+              const formatted = formatSongs(fallbackData);
+              setDeck(formatted);
+            });
+        }
+
+        const formatted = formatSongs(data);
 
         setDeck((prev) => {
           const existingIds = new Set(prev.map((track) => track.id));
@@ -60,6 +79,8 @@ const App = () => {
   }, [fetchSongs]);
 
   const handleLike = useCallback((track) => {
+    console.log("HANDLE LIKE CALLED:", track);
+
     fetch('http://localhost:3000/like', {
       method: 'POST',
       headers: {

@@ -56,71 +56,62 @@ const CardStack = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center pt-2 pb-10 px-4 gap-6 overflow-hidden">
+    <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
+      <div className="relative w-full -mt-6" style={{ paddingBottom: '136%' }}>
+        {/* Card stack */}
+        <div className="relative w-full max-w-sm" style={{ paddingBottom: '136%' }}>
+          <div className="absolute inset-0">
 
-      {/*
-        Aspect-ratio container trick:
-        paddingBottom % creates a height relative to width.
-        136% ≈ a slightly-taller-than-square card (like a phone screen).
-        All cards use absolute inset-0 inside this box.
-      */}
-      <div className="relative w-full max-w-sm -mt-4" style={{ paddingBottom: '136%' }}>
-        <div className="absolute inset-0">
+            {card2 && (
+              <motion.div
+                key={card2.id}
+                className="absolute inset-0"
+                style={{ scale: bgScale2, y: bgY2, zIndex: 10 }}
+                initial={{ opacity: 0, scale: 0.88 }}
+                animate={{ opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+              >
+                <SongCard track={card2} isTop={false} onLike={onLike} onPass={onPass} />
+              </motion.div>
+            )}
 
-          {/* Card 2 — furthest back */}
-          {card2 && (
-            <motion.div
-              key={card2.id}
-              className="absolute inset-0"
-              style={{ scale: bgScale2, y: bgY2, zIndex: 10 }}
-              initial={{ opacity: 0, scale: 0.88 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-            >
-              <SongCard track={card2} isTop={false} onLike={onLike} onPass={onPass} />
-            </motion.div>
-          )}
+            {card1 && (
+              <motion.div
+                key={card1.id}
+                className="absolute inset-0"
+                style={{ scale: bgScale1, y: bgY1, zIndex: 20 }}
+                initial={{ opacity: 0, scale: 0.90 }}
+                animate={{ opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 240, damping: 22 }}
+              >
+                <SongCard track={card1} isTop={false} onLike={onLike} onPass={onPass} />
+              </motion.div>
+            )}
 
-          {/* Card 1 — middle */}
-          {card1 && (
-            <motion.div
-              key={card1.id}
-              className="absolute inset-0"
-              style={{ scale: bgScale1, y: bgY1, zIndex: 20 }}
-              initial={{ opacity: 0, scale: 0.90 }}
-              animate={{ opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 240, damping: 22 }}
-            >
-              <SongCard track={card1} isTop={false} onLike={onLike} onPass={onPass} />
-            </motion.div>
-          )}
+            {card0 && (
+              <motion.div
+                key={card0.id}
+                className="absolute inset-0"
+                style={{ zIndex: 30 }}
+                initial={{ scale: 0.94, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+              >
+                <SongCard
+                  ref={topCardRef}
+                  track={card0}
+                  isTop={true}
+                  onLike={onLike}
+                  onPass={onPass}
+                  onDragUpdate={(v) => topX.set(v)}
+                />
+              </motion.div>
+            )}
 
-          {/* Card 0 — top (draggable) */}
-          {card0 && (
-            <motion.div
-              key={card0.id}
-              className="absolute inset-0"
-              style={{ zIndex: 30 }}
-              initial={{ scale: 0.94, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-            >
-              <SongCard
-                ref={topCardRef}
-                track={card0}
-                isTop={true}
-                onLike={onLike}
-                onPass={onPass}
-                onDragUpdate={v => topX.set(v)} // live MotionValue sync
-              />
-            </motion.div>
-          )}
-
+          </div>
         </div>
-      </div>
 
-      {/* Action buttons */}
-      <div className="mt-2 mb-10">
+        {/* Action buttons */}
         <ActionButtons
           onPass={handlePassButton}
           onLike={handleLikeButton}
