@@ -54,6 +54,7 @@ const SongCard = forwardRef(({
 
   // ─── Audio state (wired up in Checkpoint 3 when preview_url is real) ──────
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const audioRef = useRef(null);
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(track?.preview_url || "");
 
@@ -61,12 +62,20 @@ const SongCard = forwardRef(({
     let cancelled = false;
 
     const loadPreview = async () => {
-      // Reset when card changes
       setResolvedPreviewUrl(track?.preview_url || "");
       setIsPlaying(false);
 
-      // If Spotify already gave a preview, use it
-      if (track?.preview_url) return;
+      if (track?.preview_url) {
+        setIsPreviewLoading(false);
+        return;
+      }
+
+      if (!isTop) {
+        setIsPreviewLoading(false);
+        return;
+      }
+
+      setIsPreviewLoading(true);
 
       try {
         const url = `http://localhost:3000/preview?song=${encodeURIComponent(track?.name || "")}&artist=${encodeURIComponent(track?.artists?.[0]?.name || "")}`;
@@ -78,22 +87,20 @@ const SongCard = forwardRef(({
         }
       } catch (err) {
         console.error("Preview preload failed:", err);
+      } finally {
+        if (!cancelled) {
+          setIsPreviewLoading(false);
+        }
       }
     };
 
-    // Only preload for the top card
-    if (isTop) {
-      loadPreview();
-    } else {
-      setResolvedPreviewUrl(track?.preview_url || "");
-      setIsPlaying(false);
-    }
+    loadPreview();
 
     return () => {
       cancelled = true;
     };
   }, [track, isTop]);
-
+  
   const toggleAudio = useCallback((e) => {
     e.stopPropagation();
 
@@ -321,12 +328,17 @@ const SongCard = forwardRef(({
             )}
 
             {/* No preview notice */}
-            {!hasPreview && (
+            {isPreviewLoading ? (
+              <p className="text-gray-400 text-[11px] mt-2 flex items-center gap-1">
+                <InfoIcon className="w-3 h-3 flex-shrink-0" />
+                Checking preview...
+              </p>
+            ) : !hasPreview ? (
               <p className="text-gray-400 text-[11px] mt-2 flex items-center gap-1">
                 <InfoIcon className="w-3 h-3 flex-shrink-0" />
                 No audio preview for this track
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

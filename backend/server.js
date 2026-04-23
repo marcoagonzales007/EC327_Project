@@ -60,38 +60,50 @@ app.get("/test-db", async (req, res) => {
 app.get("/songs", async (req, res) => {
   try {
     const token = await getSpotifyToken();
-    const query = req.query.q || "pop";
-    const uid = req.query.uid || "testUser123";
+    const query = String(req.query.q || "pop");
+    const uid = req.query.uid;
 
-    const likedSnapshot = await db
-      .collection("users")
-      .doc(uid)
-      .collection("likedSongs")
-      .get();
+    console.log("GET /songs called with:", { query, uid });
 
-    const passedSnapshot = await db
-      .collection("users")
-      .doc(uid)
-      .collection("passedSongs")
-      .get();
+    let excludedIds = new Set();
 
-    const excludedIds = new Set([
-      ...likedSnapshot.docs.map((doc) => doc.id),
-      ...passedSnapshot.docs.map((doc) => doc.id),
-    ]);
+    if (uid) {
+      const likedSnapshot = await db
+        .collection("users")
+        .doc(uid)
+        .collection("likedSongs")
+        .get();
+
+      const passedSnapshot = await db
+        .collection("users")
+        .doc(uid)
+        .collection("passedSongs")
+        .get();
+
+      excludedIds = new Set([
+        ...likedSnapshot.docs.map((doc) => doc.id),
+        ...passedSnapshot.docs.map((doc) => doc.id),
+      ]);
+    }
+
+    const spotifyParams = {
+      q: query,
+      type: "track",
+      limit: 10,
+    };
+
+    console.log("Spotify search params:", spotifyParams);
 
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      params: {
-        q: query,
-        type: "track",
-        limit: 10,
-      },
+      params: spotifyParams,
     });
 
-    const songs = response.data.tracks.items
+    const items = response?.data?.tracks?.items || [];
+
+    const songs = items
       .filter((track) => !excludedIds.has(track.id))
       .map((track) => ({
         spotifyId: track.id,
@@ -104,8 +116,11 @@ app.get("/songs", async (req, res) => {
 
     res.json(songs);
   } catch (error) {
-    console.error("Spotify error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch songs" });
+    console.error("GET /songs failed:", error.response?.data || error.message || error);
+    res.status(500).json({
+      error: "Failed to fetch songs",
+      detail: error.response?.data || error.message || "Unknown error",
+    });
   }
 });
 
@@ -127,7 +142,6 @@ app.get("/preview", async (req, res) => {
 
     let previewUrl = "";
 
-    // Try original title first
     let result = await spotifyPreviewFinder(song, artist, 1);
 
     if (
@@ -140,7 +154,6 @@ app.get("/preview", async (req, res) => {
       previewUrl = result.results[0].previewUrls[0];
     }
 
-    // Fallback: try cleaned title
     if (!previewUrl && cleanSong && cleanSong !== song) {
       result = await spotifyPreviewFinder(cleanSong, artist, 1);
 
@@ -161,6 +174,42 @@ app.get("/preview", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch preview" });
   }
 });
+
+app.get("/likedCount/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    const snapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("likedSongs")
+      .get();
+
+    res.json({ count: snapshot.size });
+  } catch (error) {
+    console.error("Error reading liked count:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.get("/passedCount/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params;
+
+    const snapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("passedSongs")
+      .get();
+
+    res.json({ count: snapshot.size });
+  } catch (error) {
+    console.error("Error reading passed count:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // POST /like
 // Save liked song for a user

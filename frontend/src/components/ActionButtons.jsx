@@ -41,7 +41,7 @@ const ActionButtons = ({ onPass, onLike, disabled = false }) => (
       size="lg"
     >
       {/* Heart icon */}
-      <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor" aria-hidden>
+      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="currentColor" aria-hidden>
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5
                  2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
                  C13.09 3.81 14.76 3 16.5 3
@@ -54,13 +54,13 @@ const ActionButtons = ({ onPass, onLike, disabled = false }) => (
 );
 
 // ─── Reusable button atom ──────────────────────────────────────────────────────
-const ActionButton = ({ onClick, disabled, colorClass, size, children, 'aria-label': label }) => (
+const ActionButton = ({ onClick, disabled, colorClass, children, 'aria-label': label }) => (
   <motion.button
     onClick={onClick}
     disabled={disabled}
     aria-label={label}
     className={`
-      ${size === 'lg' ? 'w-16 h-16' : 'w-14 h-14'}
+      w-16 h-16
       rounded-full border-2 flex items-center justify-center
       transition-colors duration-150 shadow-lg
       disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none

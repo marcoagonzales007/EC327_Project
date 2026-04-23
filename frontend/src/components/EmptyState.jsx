@@ -31,10 +31,11 @@ const EmptyState = ({ onReset }) => (
       onClick={onReset}
       className="
         px-8 py-3.5 rounded-full
-        bg-spotify-green text-black font-bold text-sm
-        shadow-green-glow hover:bg-green-400
-        transition-colors duration-150
+        bg-[#1DB954] text-black font-bold text-sm
+        shadow-lg hover:bg-[#1ed760]
+        transition-all duration-150
       "
+      
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.96 }}
     >

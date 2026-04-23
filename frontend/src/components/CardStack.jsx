@@ -57,9 +57,9 @@ const CardStack = ({
 
   return (
     <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
-      <div className="relative w-full -mt-6" style={{ paddingBottom: '136%' }}>
+      <div className="w-full max-w-sm flex flex-col items-center -mt-6">
         {/* Card stack */}
-        <div className="relative w-full max-w-sm" style={{ paddingBottom: '136%' }}>
+        <div className="relative w-full" style={{ paddingBottom: '136%' }}>
           <div className="absolute inset-0">
 
             {card2 && (
@@ -112,11 +112,13 @@ const CardStack = ({
         </div>
 
         {/* Action buttons */}
-        <ActionButtons
-          onPass={handlePassButton}
-          onLike={handleLikeButton}
-          disabled={!card0}
-        />
+        <div className="mt-6">
+          <ActionButtons
+            onPass={handlePassButton}
+            onLike={handleLikeButton}
+            disabled={!card0}
+          />
+        </div>
       </div>
     </div>
   );
