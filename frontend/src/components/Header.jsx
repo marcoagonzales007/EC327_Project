@@ -4,7 +4,22 @@ import React from 'react';
  * Header — top bar with logo + placeholder user avatar.
  * Stats (likedCount, passedCount) are wired up in Checkpoint 2.
  */
-const Header = ({ likedCount = 0, passedCount = 0 }) => (
+const getInitials = (email = "") =>
+  email
+    .split("@")[0]
+    .split(/[\W_]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "?";
+
+const Header = ({
+  likedCount = 0,
+  passedCount = 0,
+  user,
+  activeView = "discover",
+  onNavigate,
+}) => (
   <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/5">
 
     {/* Logo */}
@@ -17,22 +32,72 @@ const Header = ({ likedCount = 0, passedCount = 0 }) => (
       </span>
     </div>
 
-    {/* Session counters */}
-    <div className="flex items-center gap-3 text-xs text-gray-400">
-      <span>
-        <span className="text-spotify-green font-bold">{likedCount}</span> liked
-      </span>
-      <div className="w-px h-3 bg-gray-700" />
-      <span>
-        <span className="text-red-400 font-bold">{passedCount}</span> passed
-      </span>
+    <div className="hidden md:flex items-center gap-4">
+      {/* Session counters */}
+      <div className="flex items-center gap-3 text-xs text-gray-400">
+        <span>
+          <span className="text-spotify-green font-bold">{likedCount}</span> liked
+        </span>
+        <div className="w-px h-3 bg-gray-700" />
+        <span>
+          <span className="text-red-400 font-bold">{passedCount}</span> passed
+        </span>
+      </div>
+
+      <nav className="inline-flex rounded-full border border-white/10 bg-white/5 p-1">
+        <NavButton
+          active={activeView === "discover"}
+          onClick={() => onNavigate?.("discover")}
+        >
+          Discover
+        </NavButton>
+        <NavButton
+          active={activeView === "account"}
+          onClick={() => onNavigate?.("account")}
+        >
+          Account
+        </NavButton>
+      </nav>
     </div>
 
-    {/* Placeholder avatar circle — replaced with real user data in Checkpoint 2 */}
-    <div className="w-8 h-8 rounded-full bg-spotify-gray flex items-center justify-center border border-white/10">
-      <span className="text-xs text-gray-400">?</span>
+    <div className="flex items-center gap-3">
+      <nav className="md:hidden inline-flex rounded-full border border-white/10 bg-white/5 p-1">
+        <NavButton
+          active={activeView === "discover"}
+          onClick={() => onNavigate?.("discover")}
+        >
+          Discover
+        </NavButton>
+        <NavButton
+          active={activeView === "account"}
+          onClick={() => onNavigate?.("account")}
+        >
+          Account
+        </NavButton>
+      </nav>
+
+      <div className="hidden sm:block text-right">
+        <p className="max-w-40 truncate text-sm text-white">{user?.email || "Guest"}</p>
+        <p className="text-xs text-gray-400">Your account</p>
+      </div>
+
+      <div className="w-8 h-8 rounded-full bg-spotify-gray flex items-center justify-center border border-white/10 text-xs text-white">
+        {getInitials(user?.email)}
+      </div>
     </div>
   </header>
+);
+
+const NavButton = ({ active, onClick, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`rounded-full px-3 py-1.5 text-xs transition ${
+      active ? "bg-white text-black" : "text-gray-300 hover:text-white"
+    }`}
+  >
+    {children}
+  </button>
 );
 
 const SpotifyIcon = ({ className }) => (
