@@ -8,7 +8,10 @@ const spotifyPreviewFinder = require("spotify-preview-finder");
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: [
+    'http://localhost:5173',
+    'https://spotifyproject-zzekf81e5-koulourismarios-projects.vercel.app'
+  ]
 }));
 app.use(express.json());
 
