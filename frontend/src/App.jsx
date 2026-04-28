@@ -6,6 +6,8 @@ import Header from './components/Header';
 import CardStack from './components/CardStack';
 import AccountView from "./components/AccountView";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 const formatSongs = (data) =>
   data.map((song) => ({
     id: song.spotifyId,
@@ -48,7 +50,7 @@ const App = () => {
         params.set("q", seedQuery);
       }
 
-      const res = await fetch(`http://localhost:3000/songs?${params.toString()}`);
+      const res = await fetch(`${BACKEND_URL}/songs?${params.toString()}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -99,8 +101,8 @@ const App = () => {
 
     try {
       const [likedRes, passedRes] = await Promise.all([
-        fetch(`http://localhost:3000/likedCount/${user.uid}`),
-        fetch(`http://localhost:3000/passedCount/${user.uid}`),
+        fetch(`${BACKEND_URL}/likedCount/${user.uid}`),
+        fetch(`${BACKEND_URL}/passedCount/${user.uid}`),
       ]);
 
       const likedData = await likedRes.json();
@@ -120,8 +122,8 @@ const App = () => {
 
     try {
       const [likedRes, passedRes] = await Promise.all([
-        fetch(`http://localhost:3000/likedSongs/${user.uid}`),
-        fetch(`http://localhost:3000/passedSongs/${user.uid}`),
+        fetch(`${BACKEND_URL}/likedSongs/${user.uid}`),
+        fetch(`${BACKEND_URL}/passedSongs/${user.uid}`),
       ]);
 
       const [likedData, passedData] = await Promise.all([
@@ -143,7 +145,7 @@ const App = () => {
 
     setIsLoading(true);
 
-    fetch(`http://localhost:3000/songs?q=${encodeURIComponent(query)}&uid=${user.uid}`)
+    fetch(`${BACKEND_URL}/songs?q=${encodeURIComponent(query)}&uid=${user.uid}`)
       .then(async (res) => {
         const data = await res.json();
 
@@ -161,7 +163,7 @@ const App = () => {
         console.log('Songs from backend:', data);
 
         if (!data.length && query === 'pop') {
-          return fetch(`http://localhost:3000/songs?q=drake&uid=${user.uid}`)
+          return fetch(`${BACKEND_URL}/songs?q=drake&uid=${user.uid}`)
             .then(async (res) => {
               const fallbackData = await res.json();
 
@@ -199,7 +201,6 @@ const App = () => {
           const existingIds = new Set(prev.map((track) => track.id));
           const newTracks = formatted.filter((track) => !existingIds.has(track.id));
 
-          // don't wipe out existing deck with an empty response
           if (!append && newTracks.length === 0) {
             return prev;
           }
@@ -238,7 +239,7 @@ const App = () => {
 
     console.log("HANDLE LIKE CALLED:", track);
 
-    fetch('http://localhost:3000/like', {
+    fetch(`${BACKEND_URL}/like`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -288,7 +289,7 @@ const App = () => {
 
     console.log("HANDLE PASS CALLED:", track);
 
-    fetch('http://localhost:3000/pass', {
+    fetch(`${BACKEND_URL}/pass`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

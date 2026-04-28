@@ -13,7 +13,7 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion';
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 // How far (px) or how fast (px/s) the user must drag to trigger a swipe
 const SWIPE_THRESHOLD = 100;
 const SWIPE_VELOCITY = 600;
@@ -78,8 +78,7 @@ const SongCard = forwardRef(({
       setIsPreviewLoading(true);
 
       try {
-        const url = `http://localhost:3000/preview?song=${encodeURIComponent(track?.name || "")}&artist=${encodeURIComponent(track?.artists?.[0]?.name || "")}`;
-        const res = await fetch(url);
+const url = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/preview?song=${encodeURIComponent(track?.name || "")}&artist=${encodeURIComponent(track?.artists?.[0]?.name || "")}`;        const res = await fetch(url);
         const data = await res.json();
 
         if (!cancelled && data.previewUrl) {
