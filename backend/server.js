@@ -11,7 +11,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'https://spotifyproject-zzekf81e5-koulourismarios-projects.vercel.app',
-    'https://ec-327-project.vercel.app/'
+    'https://ec-327-project.vercel.app'
   ]
 }));
 app.use(express.json());
